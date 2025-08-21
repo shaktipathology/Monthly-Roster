@@ -60,9 +60,6 @@
         .header-controls {
             font-size: 12pt;
         }
-        .notes-section {
-             page-break-before: always;
-        }
         .topic-content, .faculty-content {
             white-space: pre-wrap;
         }
@@ -96,18 +93,18 @@
         <header class="text-center mb-6">
             <h1 class="header-title">Department of Pathology and Lab Medicine</h1>
             <h2 class="header-subtitle">All India Institute of Medical Sciences, Bhopal</h2>
-            <div id="header-controls" class="header-controls mt-2 flex justify-center items-center space-x-4">
+            <div id="header-controls" class="header-controls mt-2 flex justify-between items-center">
+                <span></span> <!-- Empty span for spacing -->
                 <span id="current-date"></span>
-                <div class="controls flex items-center space-x-2">
-                    <label for="month-filter" class="font-bold">Schedule for:</label>
-                    <select id="month-filter" class="p-1 border border-black rounded-none text-base"></select>
-                </div>
             </div>
         </header>
 
         <!-- Main Content: Schedule Table -->
         <main>
-            <h3 id="schedule-title" class="text-lg font-bold mb-2 text-center"></h3>
+            <div id="schedule-title-container" class="text-lg font-bold mb-2 text-center flex justify-center items-center">
+                <span>Pathology Teaching Schedule MBBS Batch 2024.&nbsp;</span>
+                <select id="month-filter" class="p-1 border border-black rounded-none text-lg font-bold"></select>
+            </div>
             <div id="loader" class="text-center p-16">
                 <p>Loading schedule...</p>
             </div>
@@ -133,7 +130,7 @@
 
         <!-- Notes Section -->
         <section class="notes-section mt-8">
-            <h3 class="text-lg font-bold mb-2 border-b border-black pb-1">Notes & Updates</h3>
+            <h3 class="text-lg font-bold mb-2 border-b border-black pb-1">Note</h3>
             <div id="notes-loader" class="text-center p-8">
                 <p>Loading notes...</p>
             </div>
@@ -340,11 +337,7 @@
             const tableBody = document.getElementById('schedule-table').querySelector('tbody');
             const loader = document.getElementById('loader');
             const selectedMonth = document.getElementById('month-filter').value;
-            const scheduleTitle = document.getElementById('schedule-title');
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-            // Update the main title
-            scheduleTitle.textContent = `Pathology Teaching Schedule MBBS Batch 2024. ${selectedMonth}`;
 
             const filteredData = fullScheduleData.filter(row => {
                 if (!row['Date'] || !row['Date'].includes('/')) return false;
