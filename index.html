@@ -15,7 +15,7 @@
         .printable-container {
             max-width: 210mm; /* A4 width */
             min-height: 297mm; /* A4 height */
-            margin: 2cm auto; /* A4-like margins */
+            margin: 1cm auto; /* Reduced margins */
             padding: 1.5cm;
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
@@ -26,9 +26,9 @@
             border-collapse: collapse;
         }
         th, td {
-            padding: 6px; /* Reduced padding */
+            padding: 5px; /* Further reduced padding */
             text-align: left;
-            font-size: 10pt; /* Reduced font size for better fit */
+            font-size: 9pt; /* Further reduced font size */
             vertical-align: top; /* Align content to the top of the cell */
             word-break: break-word; /* Prevents text from overflowing its cell */
         }
@@ -36,15 +36,14 @@
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        /* Intelligent Column Widths */
-        .col-date { width: 8%; }
-        .col-day { width: 8%; }
-        .col-time { width: 11%; }
-        .col-tlm { width: 5%; }
-        .col-venue { width: 12%; }
-        .col-topic { width: 31%; }
-        .col-faculty { width: 15%; }
-        .col-resident { width: 10%; }
+        /* Intelligent Column Widths for 7 columns*/
+        .col-date { width: 9%; }
+        .col-day { width: 9%; }
+        .col-time { width: 12%; }
+        .col-tlm { width: 6%; }
+        .col-venue { width: 14%; }
+        .col-topic { width: 30%; }
+        .col-faculty { width: 20%; }
 
         .header-title {
             font-size: 16pt;
@@ -61,8 +60,11 @@
              /* Ensures notes start on a new page when printing if necessary */
              page-break-before: always;
         }
-        .topic-content {
+        .topic-content, .faculty-content {
             white-space: pre-wrap; /* Allows text to wrap and preserves line breaks */
+        }
+        .faculty-content i {
+            color: #333; /* Slightly lighter text for SR/JR names */
         }
         @media print {
             body, .printable-container {
@@ -111,8 +113,7 @@
                             <th class="col-tlm">TLM</th>
                             <th class="col-venue">Venue</th>
                             <th class="col-topic">Topic</th>
-                            <th class="col-faculty">Faculty Name</th>
-                            <th class="col-resident">SR and JR Name</th>
+                            <th class="col-faculty">Faculty / SR-JR</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -170,7 +171,6 @@
 
         /**
          * A robust CSV parser that correctly handles quoted fields, including newlines and escaped quotes.
-         * This is the key fix to solve the missing rows issue.
          * @param {string} csvText The raw CSV string.
          * @returns {Array<Object>} An array of objects representing the CSV data.
          */
@@ -181,7 +181,6 @@
             let currentCell = '';
             let currentRow = [];
             
-            // Clean up the text by replacing CRLF with LF
             const text = csvText.trim().replace(/\r\n/g, '\n');
 
             for (let i = 0; i < text.length; i++) {
@@ -221,7 +220,6 @@
                     }
                 }
             }
-            // Add the last row if file doesn't end with a newline
             if (currentRow.length > 0 || currentCell) {
                  currentRow.push(currentCell);
                  const entry = {};
@@ -230,7 +228,6 @@
                  });
                  result.push(entry);
             }
-
             return result;
         }
 
@@ -240,17 +237,13 @@
             let lastMasterRow = null;
 
             rawData.forEach(row => {
-                 // Check if the row is essentially empty
                 if (Object.values(row).every(val => val.trim() === '')) {
                     return;
                 }
-
                 if (row['Date'] && row['Date'].trim() !== '') {
-                    // This is a new, primary entry
                     processedData.push(row);
                     lastMasterRow = row;
                 } else if (lastMasterRow) {
-                    // This is a continuation row, merge its relevant data into the last master row.
                     for (const key in row) {
                         if (row[key] && row[key].trim() !== '') {
                             if (lastMasterRow[key] && lastMasterRow[key].trim() !== '') {
@@ -265,7 +258,6 @@
             return processedData;
         }
 
-
         // Function to format time from HH:mm to AM/PM
         function formatTime(timeStr) {
             if (!timeStr || !timeStr.includes(':')) return '';
@@ -275,7 +267,7 @@
             if (isNaN(H) || isNaN(M)) return '';
             let ampm = H >= 12 ? 'PM' : 'AM';
             H = H % 12;
-            H = H ? H : 12; // The hour '0' should be '12'
+            H = H ? H : 12;
             let minutesStr = M < 10 ? '0' + M : M;
             return `${H}:${minutesStr} ${ampm}`;
         }
@@ -290,8 +282,7 @@
                 if (row['Date'] && row['Date'].includes('/')) {
                     const parts = row['Date'].split('/');
                     if (parts.length === 3) {
-                        // Assuming DD/MM/YYYY format
-                        const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+                        const month = parseInt(parts[1], 10) - 1;
                         const year = parseInt(parts[2], 10);
                         if (!isNaN(month) && !isNaN(year) && month >=0 && month < 12) {
                            months.add(JSON.stringify({year: year, month: month}));
@@ -313,7 +304,6 @@
                 monthFilter.appendChild(option);
             });
             
-            // Set default to current month if available
             const today = new Date();
             const currentMonthStr = `${monthNames[today.getMonth()]} ${today.getFullYear()}`;
             if (sortedMonths.some(d => `${monthNames[d.month]} ${d.year}` === currentMonthStr)) {
@@ -325,11 +315,9 @@
 
         // Function to render the table based on the selected month
         function renderTable() {
-            const table = document.getElementById('schedule-table');
-            const tableBody = table.querySelector('tbody');
+            const tableBody = document.getElementById('schedule-table').querySelector('tbody');
             const loader = document.getElementById('loader');
-            const monthFilter = document.getElementById('month-filter');
-            const selectedMonth = monthFilter.value;
+            const selectedMonth = document.getElementById('month-filter').value;
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
             const filteredData = fullScheduleData.filter(row => {
@@ -343,7 +331,7 @@
                 return rowMonthStr === selectedMonth;
             });
 
-            tableBody.innerHTML = ''; // Clear previous data
+            tableBody.innerHTML = ''; 
 
             if (filteredData.length > 0) {
                 filteredData.forEach(row => {
@@ -351,8 +339,14 @@
                     const startTime = formatTime(row['Start time']);
                     const endTime = formatTime(row['End Time']);
                     const timeRange = (startTime && endTime) ? `${startTime} to ${endTime}` : '';
+                    
                     const facultyNames = [row['Faculty 1 Name'], row['Faculty 2 Name'], row['Faculty 3 Name']].filter(Boolean).join(', ');
                     const residentNames = [row['SR Name'], row['JR Name']].filter(Boolean).join(', ');
+                    
+                    let combinedNames = facultyNames;
+                    if (residentNames) {
+                        combinedNames += `${facultyNames ? '\n' : ''}<i>(SR/JR: ${residentNames})</i>`;
+                    }
 
                     tr.innerHTML = `
                         <td>${row['Date'] || ''}</td>
@@ -361,17 +355,16 @@
                         <td>${row['TLM'] || ''}</td>
                         <td>${row['Venue'] || ''}</td>
                         <td><div class="topic-content">${row['Topic'] || ''}</div></td>
-                        <td>${facultyNames}</td>
-                        <td>${residentNames}</td>
+                        <td><div class="faculty-content">${combinedNames || ''}</div></td>
                     `;
                     tableBody.appendChild(tr);
                 });
             } else {
-                 tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No schedule found for the selected month.</td></tr>';
+                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No schedule found for the selected month.</td></tr>';
             }
 
+            document.getElementById('schedule-table').classList.remove('hidden');
             loader.style.display = 'none';
-            table.classList.remove('hidden');
         }
 
         // Main function to fetch and initialize data
@@ -384,7 +377,7 @@
                 fullScheduleData = processScheduleData(rawData);
                 
                 populateMonthFilter(fullScheduleData);
-                renderTable(); // Initial render
+                renderTable();
 
             } catch (error) {
                 console.error('Failed to load schedule:', error);
@@ -397,19 +390,16 @@
             const notesContent = document.getElementById('notes-content');
             const notesLoader = document.getElementById('notes-loader');
             try {
-                // Using a CORS proxy to fetch the content from another domain
                 const proxyUrl = 'https://api.allorigins.win/get?url=';
                 const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 const docHtml = data.contents;
 
-                // Parse the fetched HTML and extract only the body content
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
                 notesContent.innerHTML = doc.body.innerHTML;
                 
-                // Remove any styles from the Google Doc to maintain our simple theme
                 notesContent.querySelectorAll('style').forEach(style => style.remove());
                 notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
