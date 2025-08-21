@@ -26,15 +26,25 @@
             border-collapse: collapse;
         }
         th, td {
-            padding: 8px;
+            padding: 6px; /* Reduced padding */
             text-align: left;
-            font-size: 11pt; /* Slightly smaller for better fit */
+            font-size: 10pt; /* Reduced font size for better fit */
             vertical-align: top; /* Align content to the top of the cell */
         }
         th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
+        /* Intelligent Column Widths */
+        .col-date { width: 8%; }
+        .col-day { width: 8%; }
+        .col-time { width: 11%; }
+        .col-tlm { width: 5%; }
+        .col-venue { width: 12%; }
+        .col-topic { width: 31%; }
+        .col-faculty { width: 15%; }
+        .col-resident { width: 10%; }
+
         .header-title {
             font-size: 16pt;
             font-weight: bold;
@@ -92,17 +102,17 @@
                 <p>Loading schedule...</p>
             </div>
             <div class="overflow-x-auto">
-                <table id="schedule-table" class="w-full hidden">
+                <table id="schedule-table" class="w-full hidden" style="table-layout: fixed;">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Day</th>
-                            <th>Time (AM/PM)</th>
-                            <th>TLM</th>
-                            <th>Venue</th>
-                            <th>Topic</th>
-                            <th>Faculty Name</th>
-                            <th>SR and JR Name</th>
+                            <th class="col-date">Date</th>
+                            <th class="col-day">Day</th>
+                            <th class="col-time">Time (AM/PM)</th>
+                            <th class="col-tlm">TLM</th>
+                            <th class="col-venue">Venue</th>
+                            <th class="col-topic">Topic</th>
+                            <th class="col-faculty">Faculty Name</th>
+                            <th class="col-resident">SR and JR Name</th>
                         </tr>
                     </thead>
                     <tbody>
