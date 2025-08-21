@@ -60,6 +60,18 @@
         .header-controls {
             font-size: 12pt;
         }
+        #month-filter {
+            border: none;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: transparent;
+            cursor: pointer;
+        }
+        #month-filter:focus {
+            outline: none;
+            box-shadow: none;
+        }
         .topic-content, .faculty-content {
             white-space: pre-wrap;
         }
@@ -69,13 +81,16 @@
         @media print {
             body, .printable-container {
                 margin: 0;
-                padding: 1cm;
+                padding: 0.5cm; /* Reduced padding for printing */
                 box-shadow: none;
                 border: none;
                 background-color: #fff;
             }
-            .controls {
+            .controls, #month-filter {
                 display: none;
+            }
+            #schedule-title-container span:first-child::after {
+                content: attr(data-month); /* Add month text for printing */
             }
             .doap-row, .sgl-row {
                 background-color: #f0f0f0 !important;
@@ -102,8 +117,8 @@
         <!-- Main Content: Schedule Table -->
         <main>
             <div id="schedule-title-container" class="text-lg font-bold mb-2 text-center flex justify-center items-center">
-                <span>Pathology Teaching Schedule MBBS Batch 2024.&nbsp;</span>
-                <select id="month-filter" class="p-1 border border-black rounded-none text-lg font-bold"></select>
+                <span data-month="">Pathology Teaching Schedule MBBS Batch 2024.&nbsp;</span>
+                <select id="month-filter" class="text-lg font-bold"></select>
             </div>
             <div id="loader" class="text-center p-16">
                 <p>Loading schedule...</p>
@@ -336,8 +351,13 @@
         function renderTable() {
             const tableBody = document.getElementById('schedule-table').querySelector('tbody');
             const loader = document.getElementById('loader');
-            const selectedMonth = document.getElementById('month-filter').value;
+            const monthFilter = document.getElementById('month-filter');
+            const selectedMonth = monthFilter.value;
+            const titleSpan = document.querySelector('#schedule-title-container span');
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            // Set data attribute for printing
+            titleSpan.setAttribute('data-month', selectedMonth);
 
             const filteredData = fullScheduleData.filter(row => {
                 if (!row['Date'] || !row['Date'].includes('/')) return false;
