@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department of Pathology and Lab Medicine - AIIMS Bhopal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for table content */
+        .table-cell-content {
+            max-height: 100px; /* Adjust as needed */
+            overflow-y: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        
+        <!-- Header Section -->
+        <header class="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
+            <h1 class="text-2xl sm:text-3xl font-bold text-blue-800">Department of Pathology and Lab Medicine</h1>
+            <h2 class="text-xl sm:text-2xl font-semibold text-blue-600">All India Institute of Medical Sciences, Bhopal</h2>
+            <p id="current-date" class="text-lg text-gray-600 mt-2"></p>
+        </header>
+
+        <!-- Main Content: Schedule Table -->
+        <main class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="p-4 sm:p-6 bg-gray-50 border-b border-gray-200">
+                 <h3 class="text-xl font-semibold text-gray-700">MBBS 2024 3rd SEM Master Roster</h3>
+            </div>
+            <div id="loader" class="flex justify-center items-center p-16">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="schedule-table" class="min-w-full divide-y divide-gray-200 hidden">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time (AM/PM)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TLM</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR and JR Name</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- Notes Section -->
+        <section class="bg-white shadow-md rounded-lg p-6 mt-8">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Notes & Updates</h3>
+            <div id="notes-loader" class="flex justify-center items-center p-8">
+                 <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-gray-400"></div>
+            </div>
+            <div id="notes-content" class="prose max-w-none text-gray-600">
+                <!-- Content from Google Doc will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Footer Section -->
+        <footer class="text-center mt-12 py-6 border-t border-gray-300">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-600">
+                <div>
+                    <p class="font-bold">Dr. Shakti Kumar Yadav</p>
+                    <p class="text-sm">Associate Professor</p>
+                </div>
+                <div>
+                    <p class="font-bold">Prof. Dr. Deepti Joshi</p>
+                    <p class="text-sm">Professor</p>
+                </div>
+                <div>
+                    <p class="font-bold">Prof. Dr. Vaishali Walke</p>
+                    <p class="text-sm">Head of the Department</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-6">&copy; 2024 Department of Pathology and Lab Medicine, AIIMS Bhopal. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // URLs for the public Google Sheet (as CSV) and Google Doc (as published HTML)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRO72s6aR0pRLGcn8uyS-Do5BJ-G3VCFg1pbRJS-QS4j8qYmNK5aj8J2JWhu6BdGLUOrq6wvSrBA4Jy/pub?gid=0&single=true&output=csv';
+        const DOC_URL = 'https://docs.google.com/document/d/e/2PACX-1vSu1rPSbN9SWDSwNa4Xlwbb9o7n5RRQyhLr7HEKe4tKuaUSknfsvIYeXFFEvZcKZFr3uLl8b7KBcwLO/pub';
+
+        // Set the current date in the header
+        function displayCurrentDate() {
+            const dateElement = document.getElementById('current-date');
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Function to parse CSV data into an array of objects
+        function parseCSV(csvText) {
+            const lines = csvText.split('\\n').map(line => line.trim()).filter(line => line);
+            if (lines.length < 2) return [];
+            
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = lines.slice(1).map(line => {
+                // This regex handles commas inside quoted fields
+                const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+                const entry = {};
+                headers.forEach((header, i) => {
+                    let value = values[i] || '';
+                    // Remove surrounding quotes if they exist
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.slice(1, -1);
+                    }
+                    entry[header] = value.trim();
+                });
+                return entry;
+            });
+            return data;
+        }
+
+        // Function to format time from HH:mm to AM/PM
+        function formatTime(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return '';
+            let [hours, minutes] = timeStr.split(':');
+            let H = parseInt(hours, 10);
+            let M = parseInt(minutes, 10);
+            let ampm = H >= 12 ? 'PM' : 'AM';
+            H = H % 12;
+            H = H ? H : 12; // the hour '0' should be '12'
+            let minutesStr = M < 10 ? '0' + M : M;
+            return `${H}:${minutesStr} ${ampm}`;
+        }
+
+
+        // Function to fetch and display schedule data
+        async function loadSchedule() {
+            const table = document.getElementById('schedule-table');
+            const tableBody = table.querySelector('tbody');
+            const loader = document.getElementById('loader');
+
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                const data = parseCSV(csvText);
+
+                // Clear any existing rows
+                tableBody.innerHTML = '';
+                
+                // Filter out rows where Date is empty, as they are continuation rows
+                const filteredData = data.filter(row => row['Date'] && row['Date'].trim() !== '');
+
+                // Populate the table
+                filteredData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+
+                    const startTime = formatTime(row['Start time']);
+                    const endTime = formatTime(row['End Time']);
+                    const timeRange = (startTime && endTime) ? `${startTime} to ${endTime}` : '';
+                    
+                    const facultyNames = [row['Faculty 1 Name'], row['Faculty 2 Name'], row['Faculty 3 Name']].filter(Boolean).join(', ');
+                    const residentNames = [row['SR Name'], row['JR Name']].filter(Boolean).join(', ');
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row['Date'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row['Day'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timeRange}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row['TLM'] || ''}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500"><div class="table-cell-content">${row['Venue'] || ''}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-500"><div class="table-cell-content">${row['Topic'] || ''}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${facultyNames}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${residentNames}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                // Hide loader and show table
+                loader.style.display = 'none';
+                table.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Failed to load schedule:', error);
+                loader.innerHTML = '<p class="text-red-500">Failed to load schedule data. Please try again later.</p>';
+            }
+        }
+        
+        // Function to fetch and display notes from Google Doc
+        async function loadNotes() {
+            const notesContent = document.getElementById('notes-content');
+            const notesLoader = document.getElementById('notes-loader');
+            try {
+                // We use a CORS proxy to bypass browser restrictions for fetching cross-origin content
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const docHtml = data.contents;
+
+                // Parse the HTML and extract the content from the body
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(docHtml, 'text/html');
+                const bodyContent = doc.body.innerHTML;
+                
+                // Inject the content into our notes div
+                notesContent.innerHTML = bodyContent;
+                // Remove Google's default styling to let Tailwind CSS take over
+                notesContent.querySelectorAll('style').forEach(style => style.remove());
+                notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+                notesContent.querySelectorAll('div').forEach(el => {
+                    // This is a simple way to unwrap content from divs
+                    el.outerHTML = el.innerHTML;
+                });
+
+
+            } catch (error) {
+                console.error('Failed to load notes:', error);
+                notesContent.innerHTML = '<p class="text-red-500">Failed to load notes. Please try again later.</p>';
+            } finally {
+                notesLoader.style.display = 'none';
+            }
+        }
+
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            displayCurrentDate();
+            loadSchedule();
+            loadNotes();
+        });
+    </script>
+
+</body>
+</html>
