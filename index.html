@@ -158,27 +158,70 @@
             dateElement.textContent = today.toLocaleDateString('en-US', options);
         }
 
-        // A more robust function to parse CSV data into an array of objects
+        /**
+         * A robust CSV parser that correctly handles quoted fields, including newlines and escaped quotes.
+         * This is the key fix to solve the missing rows issue.
+         * @param {string} csvText The raw CSV string.
+         * @returns {Array<Object>} An array of objects representing the CSV data.
+         */
         function parseCSV(csvText) {
-            const lines = csvText.split(/\r?\n/);
-            if (lines.length < 2) return [];
+            const result = [];
+            let headers = [];
+            let inQuotes = false;
+            let currentCell = '';
+            let currentRow = [];
             
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = lines.slice(1).map(line => {
-                // This regex is improved to better handle quoted fields containing commas
-                const values = line.match(/(".*?"|[^",\r]+|(?<=,)(?=,)|(?<=,)$)/g) || [];
-                const entry = {};
-                headers.forEach((header, i) => {
-                    let value = (values[i] || '').trim();
-                    // Remove surrounding quotes if they exist and un-escape double quotes
-                    if (value.startsWith('"') && value.endsWith('"')) {
-                        value = value.slice(1, -1).replace(/""/g, '"');
+            // Clean up the text by replacing CRLF with LF
+            const text = csvText.trim().replace(/\r\n/g, '\n');
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (inQuotes) {
+                    if (char === '"' && nextChar === '"') {
+                        currentCell += '"';
+                        i++; // Skip the next quote
+                    } else if (char === '"') {
+                        inQuotes = false;
+                    } else {
+                        currentCell += char;
                     }
-                    entry[header] = value;
-                });
-                return entry;
-            });
-            return data;
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentCell);
+                        currentCell = '';
+                    } else if (char === '\n') {
+                        currentRow.push(currentCell);
+                        currentCell = '';
+                        if (headers.length === 0) {
+                            headers = currentRow.map(h => h.trim());
+                        } else {
+                            const entry = {};
+                            headers.forEach((header, index) => {
+                                entry[header] = currentRow[index] || '';
+                            });
+                            result.push(entry);
+                        }
+                        currentRow = [];
+                    } else {
+                        currentCell += char;
+                    }
+                }
+            }
+            // Add the last row if file doesn't end with a newline
+            if (currentRow.length > 0 || currentCell) {
+                 currentRow.push(currentCell);
+                 const entry = {};
+                 headers.forEach((header, index) => {
+                     entry[header] = currentRow[index] || '';
+                 });
+                 result.push(entry);
+            }
+
+            return result;
         }
 
         // Function to process raw data, merging continuation rows
@@ -198,7 +241,6 @@
                     lastMasterRow = row;
                 } else if (lastMasterRow) {
                     // This is a continuation row, merge its relevant data into the last master row.
-                    // We will append content to any column that has new data.
                     for (const key in row) {
                         if (row[key] && row[key].trim() !== '') {
                             if (lastMasterRow[key] && lastMasterRow[key].trim() !== '') {
