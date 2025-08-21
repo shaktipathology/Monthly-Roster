@@ -5,53 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Department of Pathology and Lab Medicine - AIIMS Bhopal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #ffffff;
+            color: #000000;
         }
-        /* Custom styles for table content */
-        .table-cell-content {
-            max-height: 100px; /* Adjust as needed */
-            overflow-y: auto;
-            display: block;
+        .printable-container {
+            max-width: 210mm; /* A4 width */
+            margin: 2cm auto; /* A4 margins */
+            padding: 1cm;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            font-size: 12pt;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .header-title {
+            font-size: 16pt;
+            font-weight: bold;
+        }
+        .header-subtitle {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        .header-date {
+            font-size: 12pt;
+        }
+        .notes-section {
+             page-break-before: always;
+        }
+        @media print {
+            body, .printable-container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .controls {
+                display: none;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+    <div class="printable-container">
         
         <!-- Header Section -->
-        <header class="bg-white shadow-md rounded-lg p-6 mb-8 text-center">
-            <h1 class="text-2xl sm:text-3xl font-bold text-blue-800">Department of Pathology and Lab Medicine</h1>
-            <h2 class="text-xl sm:text-2xl font-semibold text-blue-600">All India Institute of Medical Sciences, Bhopal</h2>
-            <p id="current-date" class="text-lg text-gray-600 mt-2"></p>
+        <header class="text-center mb-6">
+            <h1 class="header-title">Department of Pathology and Lab Medicine</h1>
+            <h2 class="header-subtitle">All India Institute of Medical Sciences, Bhopal</h2>
+            <p id="current-date" class="header-date mt-2"></p>
         </header>
 
+        <!-- Controls for Month Selection -->
+        <div class="controls mb-4 flex items-center space-x-4">
+            <label for="month-filter" class="font-bold">Select Month:</label>
+            <select id="month-filter" class="p-2 border border-black rounded"></select>
+        </div>
+
         <!-- Main Content: Schedule Table -->
-        <main class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="p-4 sm:p-6 bg-gray-50 border-b border-gray-200">
-                 <h3 class="text-xl font-semibold text-gray-700">MBBS 2024 3rd SEM Master Roster</h3>
-            </div>
-            <div id="loader" class="flex justify-center items-center p-16">
-                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        <main>
+            <h3 class="text-lg font-bold mb-2 text-center">MBBS 2024 3rd SEM Master Roster</h3>
+            <div id="loader" class="text-center p-16">
+                <p>Loading schedule...</p>
             </div>
             <div class="overflow-x-auto">
-                <table id="schedule-table" class="min-w-full divide-y divide-gray-200 hidden">
-                    <thead class="bg-gray-100">
+                <table id="schedule-table" class="w-full hidden">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time (AM/PM)</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TLM</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SR and JR Name</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Time (AM/PM)</th>
+                            <th>TLM</th>
+                            <th>Venue</th>
+                            <th>Topic</th>
+                            <th>Faculty Name</th>
+                            <th>SR and JR Name</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody>
                         <!-- Data will be inserted here by JavaScript -->
                     </tbody>
                 </table>
@@ -59,33 +102,32 @@
         </main>
 
         <!-- Notes Section -->
-        <section class="bg-white shadow-md rounded-lg p-6 mt-8">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Notes & Updates</h3>
-            <div id="notes-loader" class="flex justify-center items-center p-8">
-                 <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-gray-400"></div>
+        <section class="notes-section mt-8">
+            <h3 class="text-lg font-bold mb-2 border-b border-black pb-1">Notes & Updates</h3>
+            <div id="notes-loader" class="text-center p-8">
+                <p>Loading notes...</p>
             </div>
-            <div id="notes-content" class="prose max-w-none text-gray-600">
+            <div id="notes-content" class="text-sm">
                 <!-- Content from Google Doc will be inserted here -->
             </div>
         </section>
 
         <!-- Footer Section -->
-        <footer class="text-center mt-12 py-6 border-t border-gray-300">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-600">
+        <footer class="text-center mt-12 pt-6 border-t border-black text-sm">
+            <div class="flex justify-around">
                 <div>
                     <p class="font-bold">Dr. Shakti Kumar Yadav</p>
-                    <p class="text-sm">Associate Professor</p>
+                    <p>Associate Professor</p>
                 </div>
                 <div>
                     <p class="font-bold">Prof. Dr. Deepti Joshi</p>
-                    <p class="text-sm">Professor</p>
+                    <p>Professor</p>
                 </div>
                 <div>
                     <p class="font-bold">Prof. Dr. Vaishali Walke</p>
-                    <p class="text-sm">Head of the Department</p>
+                    <p>Head of the Department</p>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-6">&copy; 2024 Department of Pathology and Lab Medicine, AIIMS Bhopal. All rights reserved.</p>
         </footer>
 
     </div>
@@ -94,6 +136,8 @@
         // URLs for the public Google Sheet (as CSV) and Google Doc (as published HTML)
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRO72s6aR0pRLGcn8uyS-Do5BJ-G3VCFg1pbRJS-QS4j8qYmNK5aj8J2JWhu6BdGLUOrq6wvSrBA4Jy/pub?gid=0&single=true&output=csv';
         const DOC_URL = 'https://docs.google.com/document/d/e/2PACX-1vSu1rPSbN9SWDSwNa4Xlwbb9o7n5RRQyhLr7HEKe4tKuaUSknfsvIYeXFFEvZcKZFr3uLl8b7KBcwLO/pub';
+
+        let fullScheduleData = []; // To store all fetched data
 
         // Set the current date in the header
         function displayCurrentDate() {
@@ -105,17 +149,15 @@
 
         // Function to parse CSV data into an array of objects
         function parseCSV(csvText) {
-            const lines = csvText.split('\\n').map(line => line.trim()).filter(line => line);
+            const lines = csvText.split(/\r?\n/).map(line => line.trim()).filter(line => line);
             if (lines.length < 2) return [];
             
             const headers = lines[0].split(',').map(h => h.trim());
             const data = lines.slice(1).map(line => {
-                // This regex handles commas inside quoted fields
                 const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
                 const entry = {};
                 headers.forEach((header, i) => {
                     let value = values[i] || '';
-                    // Remove surrounding quotes if they exist
                     if (value.startsWith('"') && value.endsWith('"')) {
                         value = value.slice(1, -1);
                     }
@@ -134,64 +176,111 @@
             let M = parseInt(minutes, 10);
             let ampm = H >= 12 ? 'PM' : 'AM';
             H = H % 12;
-            H = H ? H : 12; // the hour '0' should be '12'
+            H = H ? H : 12;
             let minutesStr = M < 10 ? '0' + M : M;
             return `${H}:${minutesStr} ${ampm}`;
         }
 
+        // Function to populate the month filter dropdown
+        function populateMonthFilter(data) {
+            const monthFilter = document.getElementById('month-filter');
+            const months = new Set();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        // Function to fetch and display schedule data
-        async function loadSchedule() {
+            data.forEach(row => {
+                if (row['Date'] && row['Date'].includes('/')) {
+                    const parts = row['Date'].split('/');
+                    if (parts.length === 3) {
+                        const month = parseInt(parts[1], 10) - 1; // 0-indexed
+                        const year = parseInt(parts[2], 10);
+                        months.add(`${monthNames[month]} ${year}`);
+                    }
+                }
+            });
+
+            monthFilter.innerHTML = '';
+            const sortedMonths = Array.from(months).sort((a, b) => new Date(a) - new Date(b));
+            sortedMonths.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthFilter.appendChild(option);
+            });
+            
+            // Set default to current month if available
+            const today = new Date();
+            const currentMonthStr = `${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+            if (months.has(currentMonthStr)) {
+                monthFilter.value = currentMonthStr;
+            }
+
+            monthFilter.addEventListener('change', () => renderTable());
+        }
+
+        // Function to render the table based on the selected month
+        function renderTable() {
             const table = document.getElementById('schedule-table');
             const tableBody = table.querySelector('tbody');
             const loader = document.getElementById('loader');
+            const monthFilter = document.getElementById('month-filter');
+            const selectedMonth = monthFilter.value;
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-            try {
-                const response = await fetch(SHEET_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const csvText = await response.text();
-                const data = parseCSV(csvText);
+            const filteredData = fullScheduleData.filter(row => {
+                if (!row['Date'] || !row['Date'].includes('/')) return false;
+                const parts = row['Date'].split('/');
+                if (parts.length !== 3) return false;
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                const rowMonthStr = `${monthNames[month]} ${year}`;
+                return rowMonthStr === selectedMonth;
+            });
 
-                // Clear any existing rows
-                tableBody.innerHTML = '';
-                
-                // Filter out rows where Date is empty, as they are continuation rows
-                const filteredData = data.filter(row => row['Date'] && row['Date'].trim() !== '');
+            tableBody.innerHTML = ''; // Clear previous data
 
-                // Populate the table
+            if (filteredData.length > 0) {
                 filteredData.forEach(row => {
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-
                     const startTime = formatTime(row['Start time']);
                     const endTime = formatTime(row['End Time']);
                     const timeRange = (startTime && endTime) ? `${startTime} to ${endTime}` : '';
-                    
                     const facultyNames = [row['Faculty 1 Name'], row['Faculty 2 Name'], row['Faculty 3 Name']].filter(Boolean).join(', ');
                     const residentNames = [row['SR Name'], row['JR Name']].filter(Boolean).join(', ');
 
                     tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row['Date'] || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row['Day'] || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timeRange}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row['TLM'] || ''}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500"><div class="table-cell-content">${row['Venue'] || ''}</div></td>
-                        <td class="px-6 py-4 text-sm text-gray-500"><div class="table-cell-content">${row['Topic'] || ''}</div></td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${facultyNames}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${residentNames}</td>
+                        <td>${row['Date'] || ''}</td>
+                        <td>${row['Day'] || ''}</td>
+                        <td>${timeRange}</td>
+                        <td>${row['TLM'] || ''}</td>
+                        <td>${row['Venue'] || ''}</td>
+                        <td>${row['Topic'] || ''}</td>
+                        <td>${facultyNames}</td>
+                        <td>${residentNames}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
+            } else {
+                 tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No schedule found for the selected month.</td></tr>';
+            }
 
-                // Hide loader and show table
-                loader.style.display = 'none';
-                table.classList.remove('hidden');
+            loader.style.display = 'none';
+            table.classList.remove('hidden');
+        }
+
+        // Main function to fetch and initialize data
+        async function loadSchedule() {
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const csvText = await response.text();
+                fullScheduleData = parseCSV(csvText).filter(row => row['Date'] && row['Date'].trim() !== '');
+                
+                populateMonthFilter(fullScheduleData);
+                renderTable(); // Initial render
 
             } catch (error) {
                 console.error('Failed to load schedule:', error);
-                loader.innerHTML = '<p class="text-red-500">Failed to load schedule data. Please try again later.</p>';
+                document.getElementById('loader').innerHTML = '<p class="text-red-500">Failed to load schedule data.</p>';
             }
         }
         
@@ -200,39 +289,25 @@
             const notesContent = document.getElementById('notes-content');
             const notesLoader = document.getElementById('notes-loader');
             try {
-                // We use a CORS proxy to bypass browser restrictions for fetching cross-origin content
                 const proxyUrl = 'https://api.allorigins.win/get?url=';
                 const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 const docHtml = data.contents;
 
-                // Parse the HTML and extract the content from the body
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
-                const bodyContent = doc.body.innerHTML;
-                
-                // Inject the content into our notes div
-                notesContent.innerHTML = bodyContent;
-                // Remove Google's default styling to let Tailwind CSS take over
+                notesContent.innerHTML = doc.body.innerHTML;
                 notesContent.querySelectorAll('style').forEach(style => style.remove());
                 notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
-                notesContent.querySelectorAll('div').forEach(el => {
-                    // This is a simple way to unwrap content from divs
-                    el.outerHTML = el.innerHTML;
-                });
-
 
             } catch (error) {
                 console.error('Failed to load notes:', error);
-                notesContent.innerHTML = '<p class="text-red-500">Failed to load notes. Please try again later.</p>';
+                notesContent.innerHTML = '<p>Failed to load notes.</p>';
             } finally {
                 notesLoader.style.display = 'none';
             }
         }
-
 
         // Initial load
         document.addEventListener('DOMContentLoaded', () => {
