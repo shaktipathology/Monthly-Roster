@@ -26,15 +26,19 @@
             border-collapse: collapse;
         }
         th, td {
-            padding: 5px;
+            padding: 4px; /* Reduced padding */
             text-align: left;
-            font-size: 9pt;
+            font-size: 8pt; /* Further reduced font size */
             vertical-align: top;
             word-break: break-word;
         }
         th {
             background-color: #f2f2f2;
             font-weight: bold;
+        }
+        /* Row shading for specific TLM types */
+        .doap-row, .sgl-row {
+            background-color: #f0f0f0; /* Light grey shading */
         }
         /* Column Widths for 7 columns*/
         .col-date { width: 9%; }
@@ -75,6 +79,11 @@
             }
             .controls {
                 display: none;
+            }
+            .doap-row, .sgl-row {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact; /* Ensures background color prints in Chrome */
+                print-color-adjust: exact; /* Standard property */
             }
         }
     </style>
@@ -124,6 +133,7 @@
 
         <!-- Notes Section -->
         <section class="notes-section mt-8">
+            <h3 class="text-lg font-bold mb-2 border-b border-black pb-1">Notes & Updates</h3>
             <div id="notes-loader" class="text-center p-8">
                 <p>Loading notes...</p>
             </div>
@@ -229,19 +239,22 @@
             return result;
         }
 
-        // Function to process raw data, merging continuation rows and filtering out weekends/holidays
+        // Function to process raw data, merging continuation rows and filtering out weekends/holidays/blank topics
         function processScheduleData(rawData) {
             const processedData = [];
             let lastMasterRow = null;
 
-            // First, filter out weekends and holidays
+            // First, filter out weekends, holidays, and rows with no topic
             const workingDaysData = rawData.filter(row => {
                 const day = (row['Day'] || '').trim();
                 const holiday = (row['Holidays or No Class'] || '').trim();
+                const topic = (row['Topic'] || '').trim();
                 const isWeekend = day === 'Saturday' || day === 'Sunday';
                 const isHoliday = holiday !== '';
-                // Keep rows that are NOT weekends/holidays, OR are continuation rows (no date)
-                return (!isWeekend && !isHoliday) || !(row['Date'] || '').trim();
+                const hasNoTopic = topic === '';
+                
+                // Keep rows that are NOT weekends/holidays/no-topic, OR are continuation rows (no date)
+                return (!isWeekend && !isHoliday && !hasNoTopic) || !(row['Date'] || '').trim();
             });
 
 
@@ -349,6 +362,13 @@
             if (filteredData.length > 0) {
                 filteredData.forEach(row => {
                     const tr = document.createElement('tr');
+                    const tlm = (row['TLM'] || '').trim().toUpperCase();
+                    if (tlm.includes('DOAP')) {
+                        tr.classList.add('doap-row');
+                    } else if (tlm.includes('SGL')) {
+                        tr.classList.add('sgl-row');
+                    }
+
                     const startTime = formatTime(row['Start time']);
                     const endTime = formatTime(row['End Time']);
                     const timeRange = (startTime && endTime) ? `${startTime} to ${endTime}` : '';
@@ -412,22 +432,25 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
                 
-                // Remove the Google Docs footer and other unwanted elements
-                doc.querySelectorAll('div[id^="footer"], div[id^="header"]').forEach(el => el.remove());
-                doc.body.innerHTML = doc.body.innerHTML.replace(/Published using Google Docs/g, '');
-                doc.body.innerHTML = doc.body.innerHTML.replace(/Report abuseLearn more/g, '');
-                doc.body.innerHTML = doc.body.innerHTML.replace(/Updated automatically every 5 minutes/g, '');
+                const unwantedTexts = [
+                    'Published using Google Docs',
+                    'Report abuseLearn more',
+                    'Updated automatically every 5 minutes',
+                    'MBBS Batch 2024 Notes'
+                ];
 
-                // Find and remove the specific title "MBBS Batch 2024 Notes"
-                doc.querySelectorAll('p, h1, h2, h3, h4').forEach(el => {
-                    if (el.textContent.includes('MBBS Batch 2024 Notes')) {
+                doc.body.querySelectorAll('*').forEach(el => {
+                    const text = el.textContent || "";
+                    const hasUnwantedText = unwantedTexts.some(unwanted => text.includes(unwanted));
+                    if (hasUnwantedText) {
                         el.remove();
                     }
                 });
+                
+                doc.querySelectorAll('style').forEach(style => style.remove());
 
                 notesContent.innerHTML = doc.body.innerHTML;
                 
-                notesContent.querySelectorAll('style').forEach(style => style.remove());
                 notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
             } catch (error) {
