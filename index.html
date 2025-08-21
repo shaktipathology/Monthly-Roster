@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            background-color: #f0f0f0; /* A light grey background to make the "page" stand out */
+            background-color: #f0f0f0;
             color: #000000;
         }
         .printable-container {
@@ -26,17 +26,17 @@
             border-collapse: collapse;
         }
         th, td {
-            padding: 5px; /* Further reduced padding */
+            padding: 5px;
             text-align: left;
-            font-size: 9pt; /* Further reduced font size */
-            vertical-align: top; /* Align content to the top of the cell */
-            word-break: break-word; /* Prevents text from overflowing its cell */
+            font-size: 9pt;
+            vertical-align: top;
+            word-break: break-word;
         }
         th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        /* Intelligent Column Widths for 7 columns*/
+        /* Column Widths for 7 columns*/
         .col-date { width: 9%; }
         .col-day { width: 9%; }
         .col-time { width: 12%; }
@@ -53,18 +53,17 @@
             font-size: 14pt;
             font-weight: bold;
         }
-        .header-date {
+        .header-controls {
             font-size: 12pt;
         }
         .notes-section {
-             /* Ensures notes start on a new page when printing if necessary */
              page-break-before: always;
         }
         .topic-content, .faculty-content {
-            white-space: pre-wrap; /* Allows text to wrap and preserves line breaks */
+            white-space: pre-wrap;
         }
         .faculty-content i {
-            color: #333; /* Slightly lighter text for SR/JR names */
+            color: #333;
         }
         @media print {
             body, .printable-container {
@@ -88,18 +87,18 @@
         <header class="text-center mb-6">
             <h1 class="header-title">Department of Pathology and Lab Medicine</h1>
             <h2 class="header-subtitle">All India Institute of Medical Sciences, Bhopal</h2>
-            <p id="current-date" class="header-date mt-2"></p>
+            <div id="header-controls" class="header-controls mt-2 flex justify-center items-center space-x-4">
+                <span id="current-date"></span>
+                <div class="controls flex items-center space-x-2">
+                    <label for="month-filter" class="font-bold">Schedule for:</label>
+                    <select id="month-filter" class="p-1 border border-black rounded-none text-base"></select>
+                </div>
+            </div>
         </header>
-
-        <!-- Controls for Month Selection -->
-        <div class="controls mb-4 flex items-center space-x-4">
-            <label for="month-filter" class="font-bold text-base">Select Month:</label>
-            <select id="month-filter" class="p-2 border border-black rounded-none text-base"></select>
-        </div>
 
         <!-- Main Content: Schedule Table -->
         <main>
-            <h3 class="text-lg font-bold mb-2 text-center">MBBS 2024 3rd SEM Master Roster</h3>
+            <h3 id="schedule-title" class="text-lg font-bold mb-2 text-center"></h3>
             <div id="loader" class="text-center p-16">
                 <p>Loading schedule...</p>
             </div>
@@ -125,7 +124,6 @@
 
         <!-- Notes Section -->
         <section class="notes-section mt-8">
-            <h3 class="text-lg font-bold mb-2 border-b border-black pb-1">Notes & Updates</h3>
             <div id="notes-loader" class="text-center p-8">
                 <p>Loading notes...</p>
             </div>
@@ -165,8 +163,8 @@
         function displayCurrentDate() {
             const dateElement = document.getElementById('current-date');
             const today = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            dateElement.textContent = today.toLocaleDateString('en-US', options);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = `Date: ${today.toLocaleDateString('en-GB', options)}`;
         }
 
         /**
@@ -231,12 +229,23 @@
             return result;
         }
 
-        // Function to process raw data, merging continuation rows
+        // Function to process raw data, merging continuation rows and filtering out weekends/holidays
         function processScheduleData(rawData) {
             const processedData = [];
             let lastMasterRow = null;
 
-            rawData.forEach(row => {
+            // First, filter out weekends and holidays
+            const workingDaysData = rawData.filter(row => {
+                const day = (row['Day'] || '').trim();
+                const holiday = (row['Holidays or No Class'] || '').trim();
+                const isWeekend = day === 'Saturday' || day === 'Sunday';
+                const isHoliday = holiday !== '';
+                // Keep rows that are NOT weekends/holidays, OR are continuation rows (no date)
+                return (!isWeekend && !isHoliday) || !(row['Date'] || '').trim();
+            });
+
+
+            workingDaysData.forEach(row => {
                 if (Object.values(row).every(val => val.trim() === '')) {
                     return;
                 }
@@ -318,7 +327,11 @@
             const tableBody = document.getElementById('schedule-table').querySelector('tbody');
             const loader = document.getElementById('loader');
             const selectedMonth = document.getElementById('month-filter').value;
+            const scheduleTitle = document.getElementById('schedule-title');
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            // Update the main title
+            scheduleTitle.textContent = `Pathology Teaching Schedule MBBS Batch 2024. ${selectedMonth}`;
 
             const filteredData = fullScheduleData.filter(row => {
                 if (!row['Date'] || !row['Date'].includes('/')) return false;
@@ -385,7 +398,7 @@
             }
         }
         
-        // Function to fetch and display notes from Google Doc
+        // Function to fetch and display notes from Google Doc, and clean them
         async function loadNotes() {
             const notesContent = document.getElementById('notes-content');
             const notesLoader = document.getElementById('notes-loader');
@@ -398,6 +411,20 @@
 
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
+                
+                // Remove the Google Docs footer and other unwanted elements
+                doc.querySelectorAll('div[id^="footer"], div[id^="header"]').forEach(el => el.remove());
+                doc.body.innerHTML = doc.body.innerHTML.replace(/Published using Google Docs/g, '');
+                doc.body.innerHTML = doc.body.innerHTML.replace(/Report abuseLearn more/g, '');
+                doc.body.innerHTML = doc.body.innerHTML.replace(/Updated automatically every 5 minutes/g, '');
+
+                // Find and remove the specific title "MBBS Batch 2024 Notes"
+                doc.querySelectorAll('p, h1, h2, h3, h4').forEach(el => {
+                    if (el.textContent.includes('MBBS Batch 2024 Notes')) {
+                        el.remove();
+                    }
+                });
+
                 notesContent.innerHTML = doc.body.innerHTML;
                 
                 notesContent.querySelectorAll('style').forEach(style => style.remove());
