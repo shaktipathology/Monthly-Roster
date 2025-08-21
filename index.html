@@ -9,15 +9,17 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            background-color: #ffffff;
+            background-color: #f0f0f0; /* A light grey background to make the "page" stand out */
             color: #000000;
         }
         .printable-container {
             max-width: 210mm; /* A4 width */
-            margin: 2cm auto; /* A4 margins */
-            padding: 1cm;
+            min-height: 297mm; /* A4 height */
+            margin: 2cm auto; /* A4-like margins */
+            padding: 1.5cm;
             background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            border: 1px solid #ccc;
         }
         table, th, td {
             border: 1px solid black;
@@ -27,6 +29,7 @@
             padding: 8px;
             text-align: left;
             font-size: 12pt;
+            word-wrap: break-word;
         }
         th {
             background-color: #f2f2f2;
@@ -44,12 +47,16 @@
             font-size: 12pt;
         }
         .notes-section {
+             /* Ensures notes start on a new page when printing if necessary */
              page-break-before: always;
         }
         @media print {
             body, .printable-container {
                 margin: 0;
+                padding: 1cm;
                 box-shadow: none;
+                border: none;
+                background-color: #fff;
             }
             .controls {
                 display: none;
@@ -70,8 +77,8 @@
 
         <!-- Controls for Month Selection -->
         <div class="controls mb-4 flex items-center space-x-4">
-            <label for="month-filter" class="font-bold">Select Month:</label>
-            <select id="month-filter" class="p-2 border border-black rounded"></select>
+            <label for="month-filter" class="font-bold text-base">Select Month:</label>
+            <select id="month-filter" class="p-2 border border-black rounded-none text-base"></select>
         </div>
 
         <!-- Main Content: Schedule Table -->
@@ -154,6 +161,7 @@
             
             const headers = lines[0].split(',').map(h => h.trim());
             const data = lines.slice(1).map(line => {
+                // This regex handles commas inside quoted fields
                 const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
                 const entry = {};
                 headers.forEach((header, i) => {
@@ -176,7 +184,7 @@
             let M = parseInt(minutes, 10);
             let ampm = H >= 12 ? 'PM' : 'AM';
             H = H % 12;
-            H = H ? H : 12;
+            H = H ? H : 12; // The hour '0' should be '12'
             let minutesStr = M < 10 ? '0' + M : M;
             return `${H}:${minutesStr} ${ampm}`;
         }
@@ -191,26 +199,33 @@
                 if (row['Date'] && row['Date'].includes('/')) {
                     const parts = row['Date'].split('/');
                     if (parts.length === 3) {
-                        const month = parseInt(parts[1], 10) - 1; // 0-indexed
+                        // Assuming DD/MM/YYYY format
+                        const month = parseInt(parts[1], 10) - 1; // 0-indexed month
                         const year = parseInt(parts[2], 10);
-                        months.add(`${monthNames[month]} ${year}`);
+                        if (!isNaN(month) && !isNaN(year)) {
+                           months.add(JSON.stringify({year: year, month: month}));
+                        }
                     }
                 }
             });
 
             monthFilter.innerHTML = '';
-            const sortedMonths = Array.from(months).sort((a, b) => new Date(a) - new Date(b));
-            sortedMonths.forEach(month => {
+            const sortedMonths = Array.from(months)
+                .map(item => JSON.parse(item))
+                .sort((a, b) => a.year - b.year || a.month - b.month);
+
+            sortedMonths.forEach(date => {
                 const option = document.createElement('option');
-                option.value = month;
-                option.textContent = month;
+                const monthYearStr = `${monthNames[date.month]} ${date.year}`;
+                option.value = monthYearStr;
+                option.textContent = monthYearStr;
                 monthFilter.appendChild(option);
             });
             
             // Set default to current month if available
             const today = new Date();
             const currentMonthStr = `${monthNames[today.getMonth()]} ${today.getFullYear()}`;
-            if (months.has(currentMonthStr)) {
+            if (sortedMonths.some(d => `${monthNames[d.month]} ${d.year}` === currentMonthStr)) {
                 monthFilter.value = currentMonthStr;
             }
 
@@ -273,6 +288,7 @@
                 const response = await fetch(SHEET_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const csvText = await response.text();
+                // Filter out rows that don't have a date, as they are likely continuation rows for topics
                 fullScheduleData = parseCSV(csvText).filter(row => row['Date'] && row['Date'].trim() !== '');
                 
                 populateMonthFilter(fullScheduleData);
@@ -280,7 +296,7 @@
 
             } catch (error) {
                 console.error('Failed to load schedule:', error);
-                document.getElementById('loader').innerHTML = '<p class="text-red-500">Failed to load schedule data.</p>';
+                document.getElementById('loader').innerHTML = '<p style="color: red;">Failed to load schedule data. Please check the sheet link and format.</p>';
             }
         }
         
@@ -289,27 +305,31 @@
             const notesContent = document.getElementById('notes-content');
             const notesLoader = document.getElementById('notes-loader');
             try {
+                // Using a CORS proxy to fetch the content from another domain
                 const proxyUrl = 'https://api.allorigins.win/get?url=';
                 const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 const docHtml = data.contents;
 
+                // Parse the fetched HTML and extract only the body content
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
                 notesContent.innerHTML = doc.body.innerHTML;
+                
+                // Remove any styles from the Google Doc to maintain our simple theme
                 notesContent.querySelectorAll('style').forEach(style => style.remove());
                 notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
 
             } catch (error) {
                 console.error('Failed to load notes:', error);
-                notesContent.innerHTML = '<p>Failed to load notes.</p>';
+                notesContent.innerHTML = '<p style="color: red;">Failed to load notes.</p>';
             } finally {
                 notesLoader.style.display = 'none';
             }
         }
 
-        // Initial load
+        // Initial load when the page content is ready
         document.addEventListener('DOMContentLoaded', () => {
             displayCurrentDate();
             loadSchedule();
