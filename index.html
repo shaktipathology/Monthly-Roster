@@ -149,12 +149,13 @@
         <!-- Notes Section -->
         <section class="notes-section mt-8">
             <h3 class="text-lg font-bold mb-2 pb-1">Note</h3>
-            <div id="notes-loader" class="text-center p-8">
-                <p>Loading notes...</p>
-            </div>
-            <div id="notes-content" class="text-sm">
-                <!-- Content from Google Doc will be inserted here -->
-            </div>
+            <iframe
+                id="notes-iframe"
+                src="https://docs.google.com/document/d/e/2PACX-1vSu1rPSbN9SWDSwNa4Xlwbb9o7n5RRQyhLr7HEKe4tKuaUSknfsvIYeXFFEvZcKZFr3uLl8b7KBcwLO/pub?embedded=true"
+                style="width:100%; min-height:300px; border:none; overflow:hidden;"
+                scrolling="no"
+                onload="resizeNotesIframe(this)"
+            ></iframe>
         </section>
 
         <!-- Footer Section -->
@@ -434,46 +435,13 @@
             }
         }
         
-        // Function to fetch and display notes from Google Doc, and clean them
-        async function loadNotes() {
-            const notesContent = document.getElementById('notes-content');
-            const notesLoader = document.getElementById('notes-loader');
+        // Auto-resize the notes iframe to fit its content (avoids scrollbars)
+        function resizeNotesIframe(iframe) {
             try {
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-                const docHtml = data.contents;
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(docHtml, 'text/html');
-                
-                const unwantedTexts = [
-                    'Published using Google Docs',
-                    'Report abuseLearn more',
-                    'Updated automatically every 5 minutes',
-                    'MBBS Batch 2024 Notes'
-                ];
-
-                doc.body.querySelectorAll('*').forEach(el => {
-                    const text = el.textContent || "";
-                    const hasUnwantedText = unwantedTexts.some(unwanted => text.includes(unwanted));
-                    if (hasUnwantedText) {
-                        el.remove();
-                    }
-                });
-                
-                doc.querySelectorAll('style').forEach(style => style.remove());
-
-                notesContent.innerHTML = doc.body.innerHTML;
-                
-                notesContent.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
-
-            } catch (error) {
-                console.error('Failed to load notes:', error);
-                notesContent.innerHTML = '<p style="color: red;">Failed to load notes.</p>';
-            } finally {
-                notesLoader.style.display = 'none';
+                iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
+            } catch (e) {
+                // Cross-origin iframe; fall back to a sensible fixed height
+                iframe.style.height = '400px';
             }
         }
 
@@ -481,7 +449,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             displayCurrentDate();
             loadSchedule();
-            loadNotes();
         });
     </script>
 
