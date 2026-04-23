@@ -477,15 +477,21 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(docHtml, 'text/html');
 
-                // Remove Google Docs chrome elements
+                // Remove Google Docs chrome elements (info icon, Learn more, title, footer)
                 const unwantedTexts = [
                     'Published using Google Docs',
                     'Report abuse',
-                    'Updated automatically every 5 minutes'
+                    'Updated automatically every 5 minutes',
+                    'Learn more',
+                    'MBBS Batch 2024 Notes',
+                    'Report abuseLearn more'
                 ];
                 doc.body.querySelectorAll('*').forEach(el => {
-                    if (unwantedTexts.some(t => el.textContent.trim() === t)) el.remove();
+                    const t = el.textContent.trim();
+                    if (unwantedTexts.some(u => t === u || t.includes(u))) el.remove();
                 });
+                // Remove any leftover SVG icons (the ⓘ info button)
+                doc.body.querySelectorAll('svg, [role="img"], [aria-label]').forEach(el => el.remove());
 
                 // Remove all inline styles (our CSS will control appearance)
                 doc.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
