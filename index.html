@@ -177,11 +177,15 @@
         <!-- Notes Section -->
         <section class="notes-section mt-8">
             <h3 class="text-lg font-bold mb-2 pb-1">Note</h3>
-            <div id="notes-loader" class="text-center p-4" style="font-size:8pt;">
-                <p>Loading notes...</p>
-            </div>
             <div id="notes-content">
-                <!-- Content from Google Doc will be inserted here -->
+                <ol>
+                    <li>Prior information regarding the exchange of teaching duties to the MBBS teaching incharge and HOD is mandatory.</li>
+                    <li>In case of exigencies please inform the Class coordinators and Head of the department.</li>
+                </ol>
+                <p style="margin-top: 10px; margin-bottom: 6px;">Copy to:</p>
+                <p>1. Dean Office</p>
+                <p>2. MBBS, Notice board</p>
+                <p>3.. Circulation to concerned residents and faculty</p>
             </div>
         </section>
 
@@ -206,9 +210,8 @@
     </div>
 
     <script>
-        // URLs for the public Google Sheet (as CSV) and Google Doc (as published HTML)
+        // URL for the public Google Sheet (as CSV)
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRO72s6aR0pRLGcn8uyS-Do5BJ-G3VCFg1pbRJS-QS4j8qYmNK5aj8J2JWhu6BdGLUOrq6wvSrBA4Jy/pub?gid=0&single=true&output=csv';
-        const DOC_URL = 'https://docs.google.com/document/d/e/2PACX-1vSu1rPSbN9SWDSwNa4Xlwbb9o7n5RRQyhLr7HEKe4tKuaUSknfsvIYeXFFEvZcKZFr3uLl8b7KBcwLO/pub';
 
         let fullScheduleData = []; // To store all fetched data
 
@@ -462,58 +465,10 @@
             }
         }
         
-        // Function to fetch and display notes from the published Google Doc
-        async function loadNotes() {
-            const notesContent = document.getElementById('notes-content');
-            const notesLoader = document.getElementById('notes-loader');
-            try {
-                const proxyUrl = 'https://corsproxy.io/?';
-                const response = await fetch(proxyUrl + encodeURIComponent(DOC_URL));
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const docHtml = await response.text();
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(docHtml, 'text/html');
-
-                // Remove Google Docs chrome elements (info icon, Learn more, title, footer)
-                const unwantedTexts = [
-                    'Published using Google Docs',
-                    'Report abuse',
-                    'Updated automatically every 5 minutes',
-                    'Learn more',
-                    'MBBS Batch 2024 Notes',
-                    'Report abuseLearn more'
-                ];
-                doc.body.querySelectorAll('*').forEach(el => {
-                    const t = el.textContent.trim();
-                    if (unwantedTexts.some(u => t === u || t.includes(u))) el.remove();
-                });
-                // Remove any leftover SVG icons (the ⓘ info button)
-                doc.body.querySelectorAll('svg, [role="img"], [aria-label]').forEach(el => el.remove());
-
-                // Remove all inline styles (our CSS will control appearance)
-                doc.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
-                doc.querySelectorAll('style').forEach(el => el.remove());
-
-                // Remove the document title heading (first h1)
-                const firstH1 = doc.body.querySelector('h1');
-                if (firstH1) firstH1.remove();
-
-                notesContent.innerHTML = doc.body.innerHTML;
-
-            } catch (error) {
-                console.error('Failed to load notes:', error);
-                notesContent.innerHTML = '<p style="color:red;font-size:8pt;">Failed to load notes. Please check connection.</p>';
-            } finally {
-                notesLoader.style.display = 'none';
-            }
-        }
-
         // Initial load when the page content is ready
         document.addEventListener('DOMContentLoaded', () => {
             displayCurrentDate();
             loadSchedule();
-            loadNotes();
         });
     </script>
 
